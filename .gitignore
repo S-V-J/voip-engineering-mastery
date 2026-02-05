@@ -1,0 +1,94 @@
+# VoIP Training - Git Ignore File
+
+# Packet Capture Files
+*.pcap
+*.pcapng
+*.cap
+
+# Large binary files
+*.bin
+*.so
+*.o
+*.a
+
+# Temporary files
+*.tmp
+*.temp
+*~
+*.swp
+*.swo
+
+# Log files
+*.log
+logs/
+*.out
+
+# Compiled C/C++ files
+*.exe
+*.obj
+*.dll
+build/
+cmake-build-*/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Audio/Video files (for VoIP testing)
+*.wav
+*.mp3
+*.avi
+*.mp4
+
+# Private keys and certificates
+*.key
+*.pem
+*.crt
+*.csr
+!*-example.key
+!*-sample.pem
+
+# Credentials
+*credentials*
+*password*
+*secret*
+.env
+config/secrets/
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.sublime-*
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Backup files
+*.bak
+*.backup
+
+# Node modules (if using any JS tools)
+node_modules/
+npm-debug.log
+
+# Python virtual environments
+venv/
+env/
+*.pyc
+__pycache__/
+
+# Large data directories
+data/
+captures/
+recordings/
+
+# Kamailio/OpenSIPS database dumps (too large)
+*.sql.gz
+database_dump_*
+
+# Keep but ignore specific content
+lab*/first_capture.pcap
+lab*/test_*.pcap

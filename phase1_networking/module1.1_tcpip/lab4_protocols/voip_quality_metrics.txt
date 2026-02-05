@@ -1,0 +1,128 @@
+═══════════════════════════════════════════════════════════════
+VoIP QUALITY METRICS
+═══════════════════════════════════════════════════════════════
+
+1. JITTER (Packet Delay Variation)
+===================================
+Definition: Variation in packet arrival time
+
+Calculation:
+Jitter = |Arrival_Time(packet_n) - Arrival_Time(packet_n-1)|
+
+Acceptable Thresholds:
+- Excellent: < 10ms
+- Good: < 30ms
+- Acceptable: < 50ms
+- Poor: > 50ms
+
+Impact on Voice:
+- High jitter causes choppy, robotic voice
+- Jitter buffer compensates (adds 30-100ms delay)
+
+Measurement Command:
+ping -c 100 8.8.8.8 | grep rtt
+
+Example Output:
+rtt min/avg/max/mdev = 73.882/121.904/159.929/35.832 ms
+                                                ^^^^^^
+                                                mdev = jitter estimate
+
+---
+
+2. LATENCY (One-Way Delay)
+===========================
+Definition: Time for packet to travel from source to destination
+
+Target Values:
+- Excellent: < 100ms
+- Good: < 150ms (ITU-T G.114 recommendation)
+- Acceptable: < 300ms
+- Unacceptable: > 400ms
+
+Components:
+- Serialization delay: Time to put bits on wire
+- Propagation delay: Speed of light limit (~1ms per 300km)
+- Processing delay: Router/switch processing
+- Queuing delay: Waiting in router queues
+
+Measurement:
+One-way latency ≈ RTT / 2
+ping -c 20 8.8.8.8
+
+Example: RTT = 140ms → One-way ≈ 70ms (Good for VoIP)
+
+---
+
+3. PACKET LOSS
+==============
+Definition: Percentage of packets that don't arrive
+
+Acceptable Thresholds:
+- Excellent: < 0.5%
+- Good: < 1%
+- Acceptable: < 3%
+- Poor: > 5% (call quality severely degraded)
+
+Calculation:
+Packet Loss % = (Lost Packets / Total Sent) × 100
+
+Impact on Voice:
+- 1% loss: Barely noticeable
+- 3% loss: Some audio clicks/pops
+- 5% loss: Significant quality degradation
+- 10% loss: Unintelligible
+
+Measurement Command:
+ping -c 100 8.8.8.8 | grep "packet loss"
+
+Example Output:
+100 packets transmitted, 97 received, 3% packet loss
+                                      ^^
+                                      Actual loss
+
+---
+
+4. MOS (Mean Opinion Score)
+============================
+Subjective quality rating: 1 (bad) to 5 (excellent)
+
+MOS  | Quality      | Impairment
+-----|--------------|------------------
+4.3+ | Excellent    | Imperceptible
+4.0  | Good         | Just noticeable
+3.6  | Fair         | Slightly annoying
+3.1  | Poor         | Annoying
+2.6  | Bad          | Very annoying
+
+Calculated from:
+- Latency
+- Jitter
+- Packet loss
+- Codec used
+
+G.711 codec with 0.5% loss, 50ms latency = MOS ~4.2
+
+---
+
+5. TROUBLESHOOTING COMMANDS
+============================
+
+Test Latency:
+$ ping -c 50 sip.server.com
+
+Test Jitter:
+$ ping -c 100 sip.server.com | grep mdev
+
+Test Packet Loss:
+$ ping -c 1000 sip.server.com | grep loss
+
+Continuous Monitor (for 5 minutes):
+$ ping -i 0.2 -c 1500 sip.server.com > results.txt
+
+Analyze results:
+$ grep "time=" results.txt | awk -F'time=' '{print $2}' | awk '{print $1}' | sort -n
+
+Generate statistics:
+$ echo "Min: $(grep "time=" results.txt | awk -F'time=' '{print $2}' | awk '{print $1}' | sort -n | head -1)"
+$ echo "Max: $(grep "time=" results.txt | awk -F'time=' '{print $2}' | awk '{print $1}' | sort -n | tail -1)"
+

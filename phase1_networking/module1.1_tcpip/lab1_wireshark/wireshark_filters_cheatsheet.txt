@@ -1,0 +1,43 @@
+═══════════════════════════════════════════════════════════════
+WIRESHARK FILTERS FOR VoIP ANALYSIS
+═══════════════════════════════════════════════════════════════
+
+BASIC SIP FILTERS:
+------------------
+sip                          # All SIP traffic
+sip.Method == "INVITE"       # Only INVITE messages (call setup)
+sip.Method == "REGISTER"     # Only registration requests
+sip.Method == "BYE"          # Only call termination
+sip.Status-Code == 200       # Only 200 OK responses
+sip.Status-Code >= 400       # Only error responses (4xx, 5xx)
+
+SIP BY PORT:
+------------
+udp.port == 5060             # Standard SIP port
+tcp.port == 5060             # SIP over TCP
+tcp.port == 5061             # SIP over TLS
+
+RTP FILTERS:
+------------
+rtp                          # All RTP traffic
+rtp.ssrc == 0x12345678       # Specific RTP stream
+rtp.p_type == 0              # PCMU/G.711u codec
+rtp.p_type == 8              # PCMA/G.711a codec
+
+COMBINED FILTERS:
+-----------------
+sip || rtp                   # All VoIP traffic
+ip.addr == 192.168.1.100 && sip    # SIP from/to specific IP
+udp.port >= 10000 && udp.port <= 20000  # RTP port range
+
+CALL FLOW ANALYSIS:
+-------------------
+sip.Call-ID == "abc123@10.0.0.1"    # Track specific call
+sip.CSeq.Method == "INVITE"         # Call setup sequence
+
+ADVANCED:
+---------
+(sip.Method == "INVITE") || (sip.Status-Code == 200)  # Call negotiation
+!(sip.Method == "OPTIONS")           # Exclude keepalive messages
+sip.from.user contains "1001"        # Filter by SIP user
+

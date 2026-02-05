@@ -1,0 +1,124 @@
+═══════════════════════════════════════════════════════════════
+EXERCISE 1: Basic Voice/Data Separation
+═══════════════════════════════════════════════════════════════
+Given: 192.168.10.0/24
+Requirements:
+- 60 IP phones (Voice VLAN 10)
+- 100 data devices (Data VLAN 20)
+- 20 servers (Server VLAN 30)
+
+SOLUTION:
+---------
+1. IP Phones (need 62 usable): 192.168.10.0/26
+   - Network: 192.168.10.0
+   - Broadcast: 192.168.10.63
+   - Usable: 192.168.10.1 - 192.168.10.62 (62 hosts)
+   - VLAN 10 Gateway: 192.168.10.1
+
+2. Data Devices (need 126 usable): 192.168.10.64/25
+   - Network: 192.168.10.64
+   - Broadcast: 192.168.10.127
+   - Usable: 192.168.10.65 - 192.168.10.126 (62 hosts)
+   - Wait! Only 62 hosts, need 100...
+   - Better: 192.168.10.128/25 (gives 126 hosts)
+   
+   Let me recalculate:
+   - Phones: 192.168.10.0/26 (62 usable) ✓
+   - Data: 192.168.10.64/25 (126 usable) ✓
+     - Network: 192.168.10.64
+     - Broadcast: 192.168.10.191
+     - Usable: 192.168.10.65 - 192.168.10.190
+   
+3. Servers (need 30 usable): 192.168.10.192/27
+   - Network: 192.168.10.192
+   - Broadcast: 192.168.10.223
+   - Usable: 192.168.10.193 - 192.168.10.222
+   - VLAN 30 Gateway: 192.168.10.193
+
+═══════════════════════════════════════════════════════════════
+EXERCISE 2: Multi-Site VoIP Deployment
+═══════════════════════════════════════════════════════════════
+Given: 10.50.0.0/16 (entire company network)
+Requirements:
+- Site A: 200 IP phones
+- Site B: 500 IP phones
+- Site C: 100 IP phones
+- Each site needs separate voice subnet
+
+SOLUTION:
+---------
+Site A: 10.50.1.0/24 (254 usable) ✓ fits 200 phones
+Site B: 10.50.2.0/23 (510 usable) ✓ fits 500 phones
+  - Range: 10.50.2.0 - 10.50.3.255
+Site C: 10.50.4.0/25 (126 usable) ✓ fits 100 phones
+
+═══════════════════════════════════════════════════════════════
+EXERCISE 3: VLSM (Variable Length Subnet Mask)
+═══════════════════════════════════════════════════════════════
+Given: 172.16.100.0/24
+Requirements:
+- 50 IP phones
+- 20 video conference systems
+- 5 SIP servers
+- 2 point-to-point WAN links
+
+SOLUTION (allocate largest first):
+------------------------------------
+1. IP Phones (50): 172.16.100.0/26 = 62 usable ✓
+2. Video Systems (20): 172.16.100.64/27 = 30 usable ✓
+3. SIP Servers (5): 172.16.100.96/28 = 14 usable ✓
+4. WAN Link 1 (2): 172.16.100.112/30 = 2 usable ✓
+5. WAN Link 2 (2): 172.16.100.116/30 = 2 usable ✓
+
+Summary:
+- Used: 172.16.100.0 - 172.16.100.119
+- Remaining: 172.16.100.120 - 172.16.100.255 (future growth)
+
+═══════════════════════════════════════════════════════════════
+EXERCISE 4: Calculate Network Details
+═══════════════════════════════════════════════════════════════
+Given: 192.168.50.48/28
+
+Calculate:
+----------
+Subnet Mask: 255.255.255.240
+Network Address: 192.168.50.48
+Broadcast Address: 192.168.50.63
+First Usable: 192.168.50.49
+Last Usable: 192.168.50.62
+Total Usable Hosts: 14
+
+Binary Calculation:
+192.168.50.48 = 11000000.10101000.00110010.00110000
+/28 mask      = 11111111.11111111.11111111.11110000
+Network bits  = 28, Host bits = 4
+Hosts = 2^4 - 2 = 14
+
+═══════════════════════════════════════════════════════════════
+EXERCISE 5: Your Turn - Practice Problem
+═══════════════════════════════════════════════════════════════
+Given: 10.20.30.0/24
+
+Divide into:
+- 120 IP phones
+- 30 softphones (mobile/laptop users)
+- 10 SIP trunks
+- 3 Kamailio servers
+
+YOUR SOLUTION:
+--------------
+[Work this out yourself, then check answer below]
+
+
+
+
+
+
+
+ANSWER:
+-------
+1. IP Phones (120): 10.20.30.0/25 (126 usable) ✓
+2. Softphones (30): 10.20.30.128/27 (30 usable) ✓
+3. SIP Trunks (10): 10.20.30.160/28 (14 usable) ✓
+4. Kamailio Servers (3): 10.20.30.176/28 (14 usable) ✓
+

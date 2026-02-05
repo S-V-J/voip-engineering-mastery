@@ -1,0 +1,55 @@
+═══════════════════════════════════════════════════════════════
+SIP INVITE MESSAGE STRUCTURE
+═══════════════════════════════════════════════════════════════
+
+INVITE sip:1002@192.168.1.100:5060 SIP/2.0
+Via: SIP/2.0/UDP 192.168.1.50:5060;branch=z9hG4bK776asdhds
+Max-Forwards: 70
+To: Bob <sip:1002@192.168.1.100>
+From: Alice <sip:1001@192.168.1.50>;tag=1928301774
+Call-ID: a84b4c76e66710@192.168.1.50
+CSeq: 314159 INVITE
+Contact: <sip:1001@192.168.1.50:5060>
+Content-Type: application/sdp
+Content-Length: 142
+
+v=0
+o=alice 2890844526 2890844526 IN IP4 192.168.1.50
+s=Session SDP
+c=IN IP4 192.168.1.50
+t=0 0
+m=audio 49170 RTP/AVP 0
+a=rtpmap:0 PCMU/8000
+
+═══════════════════════════════════════════════════════════════
+KEY HEADERS TO ANALYZE IN WIRESHARK:
+═══════════════════════════════════════════════════════════════
+
+1. Request Line:
+   - Method: INVITE
+   - Request-URI: sip:1002@192.168.1.100:5060
+   - SIP Version: SIP/2.0
+
+2. Via Header (routing):
+   - Protocol: SIP/2.0/UDP
+   - IP: 192.168.1.50:5060
+   - Branch: z9hG4bK776asdhds (transaction ID)
+
+3. To/From Headers:
+   - From: Caller identity
+   - To: Callee identity
+   - Tags: Used for dialog matching
+
+4. Call-ID:
+   - Unique identifier for the call
+   - Use this to filter entire call in Wireshark
+
+5. CSeq (Command Sequence):
+   - Sequence number + Method
+   - Tracks order of requests in dialog
+
+6. SDP Body:
+   - Media description (codec, IP, port)
+   - Audio port: 49170 (where RTP will flow)
+   - Codec: 0 = PCMU/G.711u
+

@@ -1,0 +1,173 @@
+# VoIP Network Subnetting - Master Exercises
+# Phase 1, Module 1.1 - TCP/IP Fundamentals
+
+===========================================================
+EXERCISE 1: Basic VoIP Deployment
+===========================================================
+Scenario: Small office with 200 IP phones and 150 data devices
+Network: 192.168.10.0/24 (available)
+
+Requirements:
+- Voice VLAN: 200 IP phones + 10% growth = 220 hosts
+- Data VLAN: 150 computers + 10% growth = 165 hosts
+- Management VLAN: 20 network devices
+
+Solution:
+1. Voice VLAN: 192.168.10.0/24 (256 hosts)
+   - Network: 192.168.10.0
+   - Subnet Mask: 255.255.255.0
+   - Usable Range: 192.168.10.1 - 192.168.10.254
+   - Broadcast: 192.168.10.255
+   - Available: 254 hosts ✓ (220 needed)
+
+Need separate /24 networks for Data and Management:
+2. Data VLAN: 192.168.20.0/24
+3. Management VLAN: 192.168.30.0/24
+
+===========================================================
+EXERCISE 2: VLSM for Multi-Site VoIP
+===========================================================
+Scenario: Main office needs efficient IP allocation
+Network: 10.0.0.0/22 (available)
+
+Requirements:
+- Site A: 400 IP phones
+- Site B: 100 IP phones
+- Site C: 50 IP phones
+- Management: 20 devices
+
+Step-by-step VLSM:
+1. Sort by size (largest first): 400, 100, 50, 20
+
+2. Site A (400 hosts):
+   - Need: 2^n - 2 >= 400
+   - 2^9 - 2 = 510 ✓
+   - Subnet: /23 (512 addresses)
+   - Network: 10.0.0.0/23
+   - Range: 10.0.0.1 - 10.0.1.254
+   - Broadcast: 10.0.1.255
+
+3. Site B (100 hosts):
+   - Need: 2^7 - 2 = 126 ✓
+   - Subnet: /25 (128 addresses)
+   - Network: 10.0.2.0/25
+   - Range: 10.0.2.1 - 10.0.2.126
+   - Broadcast: 10.0.2.127
+
+4. Site C (50 hosts):
+   - Need: 2^6 - 2 = 62 ✓
+   - Subnet: /26 (64 addresses)
+   - Network: 10.0.2.128/26
+   - Range: 10.0.2.129 - 10.0.2.190
+   - Broadcast: 10.0.2.191
+
+5. Management (20 hosts):
+   - Need: 2^5 - 2 = 30 ✓
+   - Subnet: /27 (32 addresses)
+   - Network: 10.0.2.192/27
+   - Range: 10.0.2.193 - 10.0.2.222
+   - Broadcast: 10.0.2.223
+
+===========================================================
+EXERCISE 3: Point-to-Point SIP Trunk Links
+===========================================================
+Scenario: Connect 5 SIP gateway pairs (router-to-router)
+
+Each link needs: 2 IP addresses only (no broadcast needed)
+Best subnet: /30 (4 addresses: network, 2 usable, broadcast)
+
+Network: 192.168.100.0/24 divided into /30 subnets
+
+Link 1: 192.168.100.0/30
+- Network: 192.168.100.0
+- Gateway A: 192.168.100.1
+- Gateway B: 192.168.100.2
+- Broadcast: 192.168.100.3
+
+Link 2: 192.168.100.4/30
+- Network: 192.168.100.4
+- Gateway A: 192.168.100.5
+- Gateway B: 192.168.100.6
+- Broadcast: 192.168.100.7
+
+Link 3: 192.168.100.8/30
+Link 4: 192.168.100.12/30
+Link 5: 192.168.100.16/30
+
+Total used: 20 IPs (5 links × 4 IPs)
+Remaining in /24: 236 IPs available
+
+===========================================================
+EXERCISE 4: Your Turn - Calculate This!
+===========================================================
+Network: 172.16.50.0/24
+
+Divide into:
+- VLAN 10 (Voice): 80 IP phones
+- VLAN 20 (Data): 50 computers
+- VLAN 30 (Servers): 10 servers
+- VLAN 40 (Guest): 30 devices
+
+YOUR SOLUTION:
+VLAN 10: ____________/___
+  Range: ____________ to ____________
+
+VLAN 20: ____________/___
+  Range: ____________ to ____________
+
+VLAN 30: ____________/___
+  Range: ____________ to ____________
+
+VLAN 40: ____________/___
+  Range: ____________ to ____________
+
+===========================================================
+EXERCISE 5: CIDR Practice
+===========================================================
+Convert and analyze:
+
+1. 192.168.1.0/26
+   - Subnet Mask: ___________________
+   - Total hosts: ___________________
+   - Usable hosts: __________________
+   - Network address: _______________
+   - Broadcast address: _____________
+   - First usable IP: _______________
+   - Last usable IP: ________________
+
+2. 10.10.10.64/27
+   - Work this out yourself!
+
+3. 172.20.0.0/21
+   - How many /24 networks fit in this?
+   - Answer: _______________________
+
+===========================================================
+ANSWER KEY (Don't peek until you try!)
+===========================================================
+
+Exercise 4 Solution:
+VLAN 10: 172.16.50.0/25 (128 hosts, 126 usable)
+  Range: 172.16.50.1 - 172.16.50.126
+
+VLAN 20: 172.16.50.128/26 (64 hosts, 62 usable)
+  Range: 172.16.50.129 - 172.16.50.190
+
+VLAN 30: 172.16.50.192/28 (16 hosts, 14 usable)
+  Range: 172.16.50.193 - 172.16.50.206
+
+VLAN 40: 172.16.50.208/27 (32 hosts, 30 usable)
+  Range: 172.16.50.209 - 172.16.50.238
+
+Exercise 5.1 Solution:
+- Subnet Mask: 255.255.255.192
+- Total hosts: 64
+- Usable hosts: 62
+- Network address: 192.168.1.0
+- Broadcast address: 192.168.1.63
+- First usable IP: 192.168.1.1
+- Last usable IP: 192.168.1.62
+
+Exercise 5.3 Solution:
+172.20.0.0/21 = 2048 addresses
+2048 / 256 = 8 /24 networks
