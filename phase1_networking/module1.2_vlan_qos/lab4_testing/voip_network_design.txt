@@ -1,0 +1,145 @@
+# VoIP Network Design - Complete Scenario
+
+## Network Requirements
+- 100 IP Phones
+- 150 PCs (employees)
+- 5 Servers (PBX, database, web)
+- 2 SIP Trunks to PSTN
+- Internet gateway
+
+## VLAN Design
+
+### VLAN 10: Voice
+- **Purpose:** IP phones and RTP traffic only
+- **Subnet:** 192.168.10.0/24 (254 hosts)
+- **Gateway:** 192.168.10.1
+- **DHCP Pool:** 192.168.10.10 - 192.168.10.200
+- **Reserved:** 192.168.10.201-254 for SIP trunks
+- **QoS:** DSCP EF (46), CoS 5
+- **Bandwidth:** 100 Kbps per call × 50 concurrent = 5 Mbps reserved
+
+### VLAN 20: Data
+- **Purpose:** Employee PCs and general data
+- **Subnet:** 192.168.20.0/24 (254 hosts)
+- **Gateway:** 192.168.20.1
+- **DHCP Pool:** 192.168.20.10 - 192.168.20.200
+- **QoS:** Best effort (DSCP 0)
+- **Bandwidth:** Remaining after voice allocation
+
+### VLAN 30: Servers/Management
+- **Purpose:** PBX, database, management interfaces
+- **Subnet:** 192.168.30.0/27 (30 hosts - sufficient for 5 servers)
+- **Gateway:** 192.168.30.1
+- **Static IPs:**
+  - 192.168.30.10: Kamailio SIP Server
+  - 192.168.30.11: MySQL Database
+  - 192.168.30.12: Web Server
+  - 192.168.30.13: Monitoring Server
+  - 192.168.30.14: Backup Server
+- **QoS:** DSCP AF41 (34) for SIP signaling
+- **Access:** Restricted, admin only
+
+## Port Configuration
+
+### Access Ports (IP Phones with PC)
+```
+interface GigabitEthernet0/1
+ switchport mode access
+ switchport access vlan 20          # Data VLAN for PC
+ switchport voice vlan 10           # Voice VLAN for phone
+ spanning-tree portfast
+ no shutdown
+```
+
+### Trunk Port (Switch-to-Switch)
+```
+interface GigabitEthernet0/24
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20,30
+ switchport trunk native vlan 999   # Unused VLAN for security
+ no shutdown
+```
+
+## QoS Configuration
+
+### DSCP Marking Rules
+```bash
+# SIP Signaling (port 5060, 5061)
+iptables -t mangle -A PREROUTING -p udp --dport 5060 -j DSCP --set-dscp 34
+iptables -t mangle -A PREROUTING -p tcp --dport 5061 -j DSCP --set-dscp 34
+
+# RTP Media (ports 10000-20000)
+iptables -t mangle -A PREROUTING -p udp --dport 10000:20000 -j DSCP --set-dscp 46
+
+# All Voice VLAN traffic
+iptables -t mangle -A PREROUTING -i eth0.10 -j DSCP --set-dscp 46
+```
+
+### Traffic Prioritization
+```bash
+# Create priority queue for voice VLAN
+tc qdisc add dev eth0 root handle 1: htb default 20
+
+# Voice class - 5 Mbps guaranteed, 10 Mbps max
+tc class add dev eth0 parent 1: classid 1:10 htb rate 5mbit ceil 10mbit prio 0
+
+# Data class - 10 Mbps guaranteed, 50 Mbps max
+tc class add dev eth0 parent 1: classid 1:20 htb rate 10mbit ceil 50mbit prio 1
+
+# Filter voice traffic to high-priority queue
+tc filter add dev eth0 protocol ip parent 1: prio 1 u32 match ip dscp 46 0xff flowid 1:10
+```
+
+## Security Rules
+
+### Firewall Configuration
+```bash
+# Allow SIP from Voice VLAN to Server VLAN
+iptables -A FORWARD -s 192.168.10.0/24 -d 192.168.30.10 -p udp --dport 5060 -j ACCEPT
+
+# Allow RTP between Voice VLAN devices
+iptables -A FORWARD -s 192.168.10.0/24 -d 192.168.10.0/24 -p udp --dport 10000:20000 -j ACCEPT
+
+# Block Data VLAN from directly accessing Voice VLAN
+iptables -A FORWARD -s 192.168.20.0/24 -d 192.168.10.0/24 -j DROP
+
+# Allow Data VLAN to Server VLAN (web, DB)
+iptables -A FORWARD -s 192.168.20.0/24 -d 192.168.30.0/27 -p tcp --dport 80 -j ACCEPT
+iptables -A FORWARD -s 192.168.20.0/24 -d 192.168.30.0/27 -p tcp --dport 443 -j ACCEPT
+```
+
+## IP Addressing Summary
+
+| VLAN | Name | Subnet | Gateway | Hosts | Usage |
+|------|------|--------|---------|-------|-------|
+| 10 | Voice | 192.168.10.0/24 | .1 | 254 | IP Phones, RTP |
+| 20 | Data | 192.168.20.0/24 | .1 | 254 | Employee PCs |
+| 30 | Servers | 192.168.30.0/27 | .1 | 30 | PBX, Database |
+| 999 | Native | Unused | - | - | Security (unused) |
+
+## Testing Plan
+
+1. **VLAN Isolation Test:**
+   - PC on VLAN 20 cannot ping phone on VLAN 10
+   - Phone on VLAN 10 cannot ping PC on VLAN 20
+   - Both can ping server on VLAN 30 (with firewall rules)
+
+2. **QoS Effectiveness Test:**
+   - Generate 80% network load with iperf3
+   - Place VoIP call (simulated or real)
+   - Measure voice packet delay: should be <30ms even under load
+   - Without QoS: delay would be >100ms
+
+3. **Bandwidth Reservation Test:**
+   - Start 50 concurrent calls (5 Mbps reserved)
+   - Voice quality should remain excellent
+   - Data traffic gets remaining bandwidth
+
+## Expected Results
+
+✅ Voice VLAN isolated from data VLAN
+✅ DSCP 46 marked on all RTP packets
+✅ Voice packets prioritized during congestion
+✅ <30ms jitter, <150ms latency for VoIP
+✅ Inter-VLAN routing works for authorized traffic
+✅ Firewall blocks unauthorized VLAN-to-VLAN access
